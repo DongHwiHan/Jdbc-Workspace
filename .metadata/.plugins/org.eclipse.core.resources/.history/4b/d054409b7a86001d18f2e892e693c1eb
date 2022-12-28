@@ -154,7 +154,7 @@ public class MemberView {
 	
 //	조회결과가 있을때, 여러행일때 보게될 화면
 	public void displayList(ArrayList<Member> list) {
-		System.out.println("\n 조회된 데이터는 " + list.size() + "건 입니다.");
+		System.out.println("\n 조회된 데이터는 " + list.size() + "건 입니다..");
 		for(Member m : list) {
 			System.out.println(m);
 		}

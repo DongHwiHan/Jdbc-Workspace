@@ -188,4 +188,230 @@ public class MemberDao {
 		}
 		return list;
 	}
+	public Member selectByUserId(String userId) {
+		
+//		0) 필요한 변수 셋팅.
+//		조회된 회원에 대한 정보를 담을 변수
+		Member m = null;
+		
+		Connection conn = null;
+		Statement stmt = null;
+		ResultSet rset = null;
+		
+//		실행할 sql문(완성된 형태, 세미코론 X)
+		
+		String sql = "SELECT * FROM MEMBER WHERE USERID = '"+ userId+"'";
+//		String sql = "SELECT * FROM MEMBER WHERE USERID = '' OR 1=1 --' ";
+//		' OR 1=1 --
+		
+			try {
+//		1) JDBC 드라이버 등록.
+				Class.forName("oracle.jdbc.driver.OracleDriver");
+//			오타가 있을경우, ojdbc6.jar이 없을경우 -> ClassNotFoundException
+				
+//		2) Connection 객체 생성 -> DB와 연결시키겠다.
+				conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:orcl","JDBC","JDBC");
+		
+//		3) Statement 객체생성
+				stmt = conn.createStatement();
+		
+//		4, 5)
+				rset = stmt.executeQuery(sql);
+			
+//		6_1) 현재 조회결과가 담긴 ResultSet에서 한행씩 뽑아서 VO객체에 담기 => ID검색은 검색경과가 한행이거나, 한행도 없을것.	
+				
+				if(rset.next()) { // 커서를 한행 아래로 슬쩍 움직여보고 조회결과가 있다며 true, 아니면 false
+					
+//					조회된 한 행에 대한 모든 열에 대한 데이터값을 뽑아서 하나의 Member객체에 담기.
+					m = new Member(rset.getInt("USERNO"),
+							rset.getString("USERID"),
+							rset.getString("USERPWD"),
+							rset.getString("USERNAME"),
+							rset.getString("GENDER"),
+							rset.getInt("AGE"),
+							rset.getString("EMAIL"),
+							rset.getString("PHONE"),
+							rset.getString("ADDRESS"),
+							rset.getString("HOBBY"),
+							rset.getDate("ENROLLDATE"));
+				}
+				
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			}
+			 catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				try {
+					rset.close();
+					stmt.close();
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			return m;
+	}
+	
+	
+	public ArrayList<Member> selectByUserName(String keyword){
+		
+//		0) 필요한 변수 셋팅.
+		ArrayList<Member> list = new ArrayList<>();
+		Connection conn = null;
+		Statement stmt = null;
+		ResultSet rset = null;
+		
+//		SELECT * FROM MEMBER USERNAME LIKE '%KEYWORD%'
+		String sql = "SELECT * FROM MEMBER WHERE USERNAME LIKE '%" + keyword + "%'";
+		
+		try {
+//			1) JDBC 드라이버 등록.
+					Class.forName("oracle.jdbc.driver.OracleDriver");
+//				오타가 있을경우, ojdbc6.jar이 없을경우 -> ClassNotFoundException
+					
+//			2) Connection 객체 생성 -> DB와 연결시키겠다.
+					conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:orcl","JDBC","JDBC");
+			
+//			3) Statement 객체생성
+					stmt = conn.createStatement();
+			
+//			4, 5)
+					rset = stmt.executeQuery(sql);
+				
+//			6_1) 현재 조회결과가 담긴 ResultSet에서 한행씩 뽑아서 VO객체에 담기 => ID검색은 검색경과가 한행이거나, 한행도 없을것.	
+					
+					while(rset.next()) { // 커서를 한행 아래로 슬쩍 움직여보고 조회결과가 있다며 true, 아니면 false
+						
+						list.add(new Member(rset.getInt("USERNO"),
+								rset.getString("USERID"),
+								rset.getString("USERPWD"),
+								rset.getString("USERNAME"),
+								rset.getString("GENDER"),
+								rset.getInt("AGE"),
+								rset.getString("EMAIL"),
+								rset.getString("PHONE"),
+								rset.getString("ADDRESS"),
+								rset.getString("HOBBY"),
+								rset.getDate("ENROLLDATE")));
+					}
+		
+		
+	} catch (ClassNotFoundException e) {
+		e.printStackTrace();
+	}
+	 catch (SQLException e) {
+		e.printStackTrace();
+	} finally {
+//		7)
+		try {
+			rset.close();
+			stmt.close();
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+//	8)
+	return list;
+	}
+
+	public int updateMember(Member m) {
+		
+//		0) 
+		int result = 0;
+		
+		Connection conn = null;
+		Statement stmt = null;
+		
+		/*
+		 *UPDATE MEMBER
+		 *SET USERPWD = 'XXX',
+		 *		EMAIL = 'XXX',
+		 *		PHONE = 'XXX',
+		 *		ADDRESS = 'XXX'
+		 *WHERE USERID = 'XXX' 
+		 */
+		String sql = "UPDATE MEMBER SET USERPWD = '" + m.getUserPwd() + "', "
+				+ "EMAIL = '" + m.getEmail() + "', "
+				+ "PHONE = '" + m.getPhone() + "', "
+				+ "ADDRESS = '" + m.getAddress() + "' "
+				+ "WHERE USERID = '" + m.getUserId() + "'";
+				
+				try {
+//		1) JDBC 드라이버 등록.
+					Class.forName("oracle.jdbc.driver.OracleDriver");
+//			오타가 있을경우, ojdbc6.jar이 없을경우 -> ClassNotFoundException
+					
+//		2) Connection 객체 생성 -> DB와 연결시키겠다.
+					conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:orcl","JDBC","JDBC");
+					
+//		3) Statement 객체생성
+					stmt = conn.createStatement();
+					
+//		4, 5)
+					result = stmt.executeUpdate(sql);
+					
+//		6_2) 트랜잭션 처리
+					if(result >0) { // 성공
+						conn.commit();
+					}else { // 실패
+						conn.rollback();
+					}
+					
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				}
+				 catch (SQLException e) {
+					e.printStackTrace();
+				} finally {
+//					7)
+					try {
+						stmt.close();
+						conn.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+//				8)
+				return result;
+	}
+	
+	public int deleteMember(String userId) {
+		
+		int result = 0;
+		Connection conn = null;
+		Statement stmt = null;
+		
+//		DELETE FROM MEMBER WHERE USERID = 'XXX'
+		String sql = "DELETE FROM MEMBER WHERE USERID = '" + userId + "'";
+		
+		try {
+			Class.forName("oracle.jdbc.driver.OracleDriver");
+			conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:orcl","JDBC","JDBC");
+			stmt = conn.createStatement();
+			result = stmt.executeUpdate(sql);
+			
+			if(result > 0) {
+				conn.commit();
+			}else {
+				conn.rollback();
+			}
+			
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		 catch (SQLException e) {
+			e.printStackTrace();
+		}finally {
+			try {
+				stmt.close();
+				conn.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return result;
+	}
 }
